@@ -7,7 +7,7 @@ import {UnrealBloomPass} from './vendor/UnrealBloomPass.js';
 import {OutputPass} from './vendor/OutputPass.js';
 import {WORLD,laneX} from './engine.js?v=4';
 import {CAR_MODELS,normalizeCar,drivingCamera} from './car-models.js?v=4';
-import {AdaptiveQuality} from './performance.js?v=6';
+import {AdaptiveQuality} from './performance.js?v=7';
 
 const S=45,TAU=Math.PI*2;
 const metal=new T.MeshStandardMaterial({color:0x3b505c,metalness:.7,roughness:.35});
@@ -37,9 +37,9 @@ function wingGeometry(){
 
 export class WebGLScene{
   constructor(canvas,options={}){
-    this.quality=options.quality??new AdaptiveQuality({mobile:options.mobile});
+    this.quality=options.quality??new AdaptiveQuality({mobile:options.mobile,mode:options.qualityMode});
     this.mobile=this.quality.mobile;
-    this.canvas=canvas;this.renderer=options.renderer??new T.WebGLRenderer({canvas,antialias:!this.mobile,alpha:false,powerPreference:'high-performance'});
+    this.canvas=canvas;this.renderer=options.renderer??new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
     this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.12;
     this.renderer.shadowMap.enabled=this.quality.settings.shadows;this.renderer.shadowMap.type=T.PCFSoftShadowMap;
     this.scene=new T.Scene();this.scene.background=new T.Color(0x101a23);this.scene.fog=new T.FogExp2(0x101a23,.012);
@@ -89,9 +89,16 @@ export class WebGLScene{
     this.needsRender=true;
   }
   recordFrame(milliseconds,active){
-    if(this.quality.recordFrame(milliseconds,active)){
-      this.renderer.shadowMap.enabled=this.quality.settings.shadows;this.resize();
-    }
+    if(this.quality.recordFrame(milliseconds,active))this.applyQuality();
+  }
+  setQualityMode(mode){
+    if(this.quality.setMode(mode))this.applyQuality();
+  }
+  applyQuality(){
+    this.renderer.shadowMap.enabled=this.quality.settings.shadows;
+    const anisotropy=Math.min(this.quality.settings.anisotropy,this.renderer.capabilities?.getMaxAnisotropy?.()??1);
+    for(const map of this.scrollingTextures)if(map.anisotropy!==anisotropy){map.anisotropy=anisotropy;map.needsUpdate=true;}
+    this.resize();
   }
   async loadAssets(){
     const loader=new GLTFLoader();
@@ -99,7 +106,7 @@ export class WebGLScene{
       try{return normalizeCar((await loader.loadAsync(`./assets/cars/${name}.glb`)).scene);}catch(e){console.warn('Model unavailable:',name,e);return prototypeCar();}
     }));
     const mapPromise=Promise.all(['diff','nor_gl','rough'].map(async name=>{
-      try{const texture=await this.textureLoader.loadAsync(`./assets/textures/asphalt-${name}.jpg`);texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.set(8/3,100/3);texture.anisotropy=Math.min(this.mobile?2:8,this.renderer.capabilities.getMaxAnisotropy());if(name==='diff')texture.colorSpace=T.SRGBColorSpace;this.scrollingTextures.push(texture);return texture;}catch{return null;}
+      try{const texture=await this.textureLoader.loadAsync(`./assets/textures/asphalt-${name}.jpg`);texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.set(8/3,100/3);texture.anisotropy=Math.min(this.quality.settings.anisotropy,this.renderer.capabilities.getMaxAnisotropy());if(name==='diff')texture.colorSpace=T.SRGBColorSpace;this.scrollingTextures.push(texture);return texture;}catch{return null;}
     }));
     const extraPromise=Promise.all(['ground.jpg','carbon.jpg','beam.png'].map(async file=>{try{return await this.textureLoader.loadAsync(`./assets/textures/${file}`);}catch{return null;}}));
     const [models,maps,extra]=await Promise.all([modelPromise,mapPromise,extraPromise]);this.models=models;

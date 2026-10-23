@@ -90,7 +90,7 @@ const wingAccent=extrude([[.68,-.09],[1.6,.22],[1.73,.5],[.74,.23]],.06,.072,'#a
 const wreckParts=Array.from({length:16},(_,i)=>i%5===0?cylinder(0,0,0,.25,.2,'#28342d'):box(0,0,0,.25+i%3*.09,.1+i%2*.12,.35+i%4*.08,i%4===0?'#40594f':i%3===0?'#6c7158':'#eac354'));
 
 export class Scene3D{
-  constructor(canvas){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.faces=[];this.fxTime=0;this.readyScroll=0;this.crashAge=0;this.resize();}
+  constructor(canvas,options={}){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.faces=[];this.fxTime=0;this.readyScroll=0;this.crashAge=0;this.qualityMode=options.qualityMode??'auto';this.resize();}
   async loadAssets(){
     const image=path=>new Promise(resolve=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>resolve(null);img.src=new URL(path,import.meta.url).href;});
     const [models,road]=await Promise.all([
@@ -111,7 +111,8 @@ export class Scene3D{
       ctx.translate(0,2*y+12);ctx.scale(1,-1);ctx.drawImage(this.roadAtlas,0,sourceY,tile,sourceH,c.x,y,d.x-c.x,12);ctx.restore();
     }
   }
-  resize(){const r=this.canvas.getBoundingClientRect(),dpr=Math.min(globalThis.devicePixelRatio||1,2);this.canvas.width=Math.round(r.width*dpr);this.canvas.height=Math.round(r.height*dpr);}
+  resize(){const r=this.canvas.getBoundingClientRect(),dpr=Math.min(globalThis.devicePixelRatio||1,this.qualityMode==='fast'?1:this.qualityMode==='high'?2.5:2);this.canvas.width=Math.round(r.width*dpr);this.canvas.height=Math.round(r.height*dpr);}
+  setQualityMode(mode){if(['auto','high','fast'].includes(mode)){this.qualityMode=mode;this.resize();}}
   polygon(vertices,color,alpha=1){
     const p=vertices.map(project);if(p.some(p=>p.depth<2))return;
     const ctx=this.ctx;ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.beginPath();p.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fill();ctx.globalAlpha=1;

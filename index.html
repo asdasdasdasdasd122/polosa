@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="powers.css?v=3">
   <link rel="stylesheet" href="night.css?v=4">
-  <link rel="stylesheet" href="hud.css?v=6">
+  <link rel="stylesheet" href="hud.css?v=7">
 </head>
 <body>
   <div class="page">
@@ -20,9 +20,12 @@
         <span>полоса<span class="brand-dot">.</span></span>
       </a>
       <div class="header-note"><span></span> MIDNIGHT RUN</div>
+      <div class="header-actions">
+      <label class="graphics-control"><span>Графика</span><select id="quality-select" aria-label="Качество графики"><option value="auto">Авто</option><option value="high">Высокая</option><option value="fast">Эконом</option></select></label>
       <button class="icon-button" id="sound-button" aria-label="Включить звук" aria-pressed="false" title="Звук выключен">
         <svg id="sound-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path class="sound-off" d="m16 9 6 6m0-6-6 6"/><path class="sound-on" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>
       </button>
+      </div>
     </header>
 
     <main class="game-layout">
@@ -108,6 +111,6 @@
     <footer><span>Скорость — в игре. Удовольствие — настоящее.</span><span class="footer-detail"><span></span> <a href="assets/CREDITS.md" target="_blank" rel="noopener">МОДЕЛИ И ТЕКСТУРЫ</a></span></footer>
     <p id="announcer" class="sr-only" aria-live="polite"></p>
   </div>
-  <script type="module" src="app.js?v=6"></script>
+  <script type="module" src="app.js?v=7"></script>
 </body>
 </html>

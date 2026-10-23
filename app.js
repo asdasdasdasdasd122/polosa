@@ -1,8 +1,16 @@
 import { Drive } from './engine.js?v=4';
-import { createScene } from './renderer.js?v=6';
+import { createScene } from './renderer.js?v=7';
 
 const $=id=>document.getElementById(id);
-const scene=createScene($('game')),canvas=scene.canvas,drive=new Drive();
+let graphicsMode='auto';
+try{const saved=localStorage.getItem('polosa-quality');if(['auto','high','fast'].includes(saved))graphicsMode=saved;}catch{}
+const scene=createScene($('game'),{qualityMode:graphicsMode}),canvas=scene.canvas,drive=new Drive();
+$('quality-select').value=graphicsMode;
+$('quality-select').addEventListener('change',()=>{
+  const mode=$('quality-select').value;if(!['auto','high','fast'].includes(mode))return;
+  graphicsMode=mode;scene.setQualityMode?.(mode);
+  try{localStorage.setItem('polosa-quality',mode);}catch{}
+});
 let assetsReady=!scene.ready;
 function readyToPlay(){assetsReady=true;$('start-button').disabled=false;$('start-label').textContent='Начать заезд';document.body.classList.remove('is-loading');}
 if(scene.ready){$('start-button').disabled=true;document.body.classList.add('is-loading');scene.ready.then(readyToPlay).catch(error=>{console.warn('Asset initialization:',error);readyToPlay();});}
@@ -99,6 +107,7 @@ $('pause-button').addEventListener('click',pause);$('resume-button').addEventLis
 $('nitro-button').addEventListener('click',boost);$('flight-button').addEventListener('click',fly);
 for(const [id,dir] of [['left-button',-1],['right-button',1]])$(id).addEventListener('click',()=>move(dir));
 document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='SELECT')return;
   const key=e.key.toLowerCase();
   if(['arrowleft','arrowright','a','d','ф','в','p','з',' ','escape','shift','n','т','e','у'].includes(key)){
     if(e.target.tagName==='BUTTON'&&key===' ')return;
